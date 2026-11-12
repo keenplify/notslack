@@ -197,10 +197,11 @@ impl SlackLiveWorkspaceLoader {
         self.ensure_name_display();
         let page = self.sidebar_api.load_activity_feed(cursor)?;
         let actor_user_ids = page.reaction_actor_user_ids();
-        let hydration = self.api.load_messages_list(
+        let mut hydration = self.api.load_messages_list(
             page.message_references(),
             SlackMessagesListPurpose::Activity,
         )?;
+        self.fill_missing_bot_profiles(hydration.values_mut());
         let history = json!({
             "messages": hydration.values().cloned().collect::<Vec<_>>(),
         });
