@@ -1,3 +1,4 @@
+mod emoji_font;
 mod image_cache;
 mod model_types;
 mod support;
@@ -60,6 +61,7 @@ pub(crate) const SLACK_MESSAGE_REPLY_PARTICIPANT_VISIBLE_LIMIT: usize = 3;
 pub(crate) const SLACK_PROFILE_PANEL_WIDTH: f32 = 332.0;
 
 pub(crate) use image_cache::*;
+pub use emoji_font::{emoji_font_fallbacks, EMOJI_FONT_FAMILY};
 pub use model_types::*;
 pub(crate) use support::*;
 pub use support::{

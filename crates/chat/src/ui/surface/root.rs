@@ -289,7 +289,10 @@ impl SurfaceState {
             ))
             .bg(rgb(palette.surface_bg))
             .text_color(rgb(palette.surface_text))
-            .font(font("Lato"))
+            .font(gpui::Font {
+                fallbacks: crate::ui::emoji_font_fallbacks(),
+                ..font("Lato")
+            })
             .child(self.render_cached_slack_history())
             .child(self.render_slack_workspace_body(workspace, cx));
         self.render_slack_surface_layers(surface, workspace, cx)
