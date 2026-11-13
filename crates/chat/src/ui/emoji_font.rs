@@ -32,3 +32,34 @@ pub fn emoji_font_fallbacks() -> Option<FontFallbacks> {
         None
     }
 }
+
+/// The bundled Twemoji has the emoji of Unicode 14.0; newer ones would come
+/// out blank or as their component parts.
+#[cfg(target_os = "linux")]
+const EMOJI_FONT_UNICODE_VERSION: emojis::UnicodeVersion = emojis::UnicodeVersion::new(14, 0);
+
+/// Whether the emoji font draws `emoji`, so pickers can leave out the ones it
+/// cannot.
+pub fn emoji_font_draws(emoji: &emojis::Emoji) -> bool {
+    #[cfg(target_os = "linux")]
+    {
+        emoji.unicode_version() <= EMOJI_FONT_UNICODE_VERSION
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        let _ = emoji;
+        true
+    }
+}
+
+#[cfg(all(test, target_os = "linux"))]
+mod tests {
+    use super::emoji_font_draws;
+
+    #[test]
+    fn emoji_newer_than_the_bundled_font_are_left_out() {
+        assert!(emoji_font_draws(emojis::get("🫠").unwrap()));
+        assert!(!emoji_font_draws(emojis::get("🫨").unwrap()));
+        assert!(!emoji_font_draws(emojis::get("🙂‍↔️").unwrap()));
+    }
+}
