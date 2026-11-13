@@ -38,7 +38,7 @@ pub(in crate::text_input) fn shape_text_layout(
     input_font.weight = input.font_weight;
     // Keep the app's fallback fonts (such as its emoji font), which a font
     // built from the family name alone would drop.
-    input_font.fallbacks = window.text_style().font_fallbacks.clone();
+    input_font.fallbacks = input.font_fallbacks.clone();
     let marked_range = (!render_placeholder && !input.obscured)
         .then(|| input.marked_range.clone())
         .flatten()
