@@ -10,9 +10,6 @@ use gpui_components::backdrop::dismissible_click_away;
 
 use super::SLACK_REACTION_PICKER_FOOTER_HEIGHT;
 
-/// Slack sends this on to the Customize Emoji page of the signed-in workspace.
-const SLACK_CUSTOMIZE_EMOJI_URL: &str = "https://slack.com/customize/emoji";
-
 struct SlackSkinToneFooterPresentation {
     explicit_selection: Option<SlackSkinTone>,
     displayed_selection: SlackSkinTone,
@@ -42,8 +39,8 @@ impl SurfaceState {
             .child(self.render_slack_skin_tone_footer_controls(&presentation, cx))
     }
 
-    /// Adding custom emoji and emoji packs happens on the workspace's
-    /// Customize page, so the button opens it in the browser.
+    /// Opens the Add emoji dialog, for uploading a custom emoji or adding an
+    /// emoji pack.
     fn render_slack_add_emoji_button(&self, cx: &mut Context<Self>) -> Stateful<Div> {
         let palette = slack_palette(self.appearance_mode);
         div()
@@ -80,7 +77,7 @@ impl SurfaceState {
 
     fn open_slack_add_emoji(&mut self, cx: &mut Context<Self>) {
         self.close_slack_reaction_picker(cx);
-        cx.open_url(SLACK_CUSTOMIZE_EMOJI_URL);
+        self.open_slack_add_emoji_dialog(cx);
     }
 
     fn slack_skin_tone_footer_presentation(&self) -> SlackSkinToneFooterPresentation {

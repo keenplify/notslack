@@ -9,6 +9,7 @@ mod drafts_sent;
 mod files;
 mod history;
 mod later;
+mod add_emoji;
 mod message_delete;
 mod message_forward;
 mod message_menu;
@@ -237,6 +238,9 @@ impl SurfaceState {
             })
             .when(self.slack_message_delete_modal.is_some(), |this| {
                 this.child(self.render_slack_message_delete_layer(cx))
+            })
+            .when(self.slack_add_emoji_dialog.is_some(), |this| {
+                this.child(self.render_slack_add_emoji_layer(cx))
             })
             .when(self.slack_self_status_dialog.is_some(), |this| {
                 this.child(self.render_slack_self_status_layer(cx))
