@@ -3938,12 +3938,19 @@ checksum = "0676bb32a98c1a483ce53e500a81ad9c3d5b3f7c920c28c24e9cb0980d0b5bc8"
 name = "notslack"
 version = "0.1.0"
 dependencies = [
+ "async-channel",
  "gpui",
  "gpui_platform",
  "notslack-app-model",
  "notslack-chat",
  "notslack-media-capture",
+ "raw-window-handle",
+ "serde",
  "theme",
+ "wayland-backend",
+ "wayland-client",
+ "wayland-protocols-plasma",
+ "zbus",
 ]
 
 [[package]]
