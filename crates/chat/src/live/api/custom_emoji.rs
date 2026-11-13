@@ -81,17 +81,32 @@ impl SlackApiClient {
     }
 }
 
+/// Slack lists every pack under `available` and the workspace's own under
+/// `installed`, matched by id.
 fn parse_emoji_packs(payload: &Value) -> Result<Vec<SlackEmojiPack>, String> {
-    let packs = payload
-        .get("collections")
+    let available = payload
+        .get("available")
         .and_then(Value::as_array)
-        .ok_or_else(|| format!("Slack {SLACK_EMOJI_PACKS_METHOD} returned no collections"))?;
-    Ok(packs.iter().filter_map(parse_emoji_pack).collect())
+        .ok_or_else(|| format!("Slack {SLACK_EMOJI_PACKS_METHOD} returned no available packs"))?;
+    let installed = payload
+        .get("installed")
+        .and_then(Value::as_array)
+        .map(|packs| {
+            packs
+                .iter()
+                .filter_map(|pack| pack.get("id").and_then(Value::as_str))
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+    Ok(available
+        .iter()
+        .filter_map(|pack| parse_emoji_pack(pack, &installed))
+        .collect())
 }
 
 /// Packs Slack describes incompletely are left out rather than failing the
 /// whole list.
-fn parse_emoji_pack(pack: &Value) -> Option<SlackEmojiPack> {
+fn parse_emoji_pack(pack: &Value, installed: &[&str]) -> Option<SlackEmojiPack> {
     let text = |key: &str| pack.get(key).and_then(Value::as_str).map(str::to_string);
     let emoji = pack
         .get("emoji")
@@ -104,14 +119,12 @@ fn parse_emoji_pack(pack: &Value) -> Option<SlackEmojiPack> {
             })
         })
         .collect();
+    let id = text("id")?;
     Some(SlackEmojiPack {
-        id: text("id")?,
+        installed: installed.contains(&id.as_str()),
+        id,
         name: text("name")?,
         author: text("author").unwrap_or_default(),
-        installed: pack
-            .get("installed")
-            .and_then(Value::as_bool)
-            .unwrap_or(false),
         emoji,
     })
 }
@@ -126,21 +139,23 @@ mod tests {
     fn packs_keep_their_emoji_in_slack_order_and_skip_incomplete_ones() {
         let payload = json!({
             "ok": true,
-            "collections": [
+            "available": [
                 {
                     "id": "EC1",
                     "name": "Alphabet",
                     "author": "Rebeca Anaya",
-                    "installed": true,
                     "emoji": {"alphabet-a": "https://e/a.png", "alphabet-at": "https://e/at.png"}
                 },
+                {"id": "EC2", "name": "Gratitude", "author": "Vaughn Fender", "emoji": {}},
                 {"name": "No id", "emoji": {}},
-            ]
+            ],
+            "installed": [{"id": "EC2"}]
         });
         let packs = parse_emoji_packs(&payload).unwrap();
-        assert_eq!(packs.len(), 1);
+        assert_eq!(packs.len(), 2);
         assert_eq!(packs[0].id, "EC1");
-        assert!(packs[0].installed);
+        assert!(!packs[0].installed);
+        assert!(packs[1].installed);
         assert_eq!(
             packs[0]
                 .emoji
