@@ -9,6 +9,33 @@ use super::SlackApiClient;
 
 const SLACK_HUDDLE_JOIN_METHOD: &str = "rooms.join";
 const SLACK_HUDDLE_LEAVE_METHOD: &str = "rooms.leave";
+/// Amazon's public lookup of the closest Chime media region, which Slack's
+/// client passes to rooms.join as `regions`.
+const CHIME_NEAREST_REGION_URL: &str = "https://nearest-media-region.l.chime.aws";
+const CHIME_NEAREST_REGION_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(3);
+
+#[derive(Deserialize)]
+struct ChimeNearestRegion {
+    region: String,
+}
+
+/// The closest Chime media region, or empty (letting Slack choose) when the
+/// lookup fails, as Slack's client does without one.
+fn nearest_chime_region() -> String {
+    reqwest::blocking::Client::builder()
+        .timeout(CHIME_NEAREST_REGION_TIMEOUT)
+        .build()
+        .ok()
+        .and_then(|client| client.get(CHIME_NEAREST_REGION_URL).send().ok())
+        .and_then(|response| response.json::<ChimeNearestRegion>().ok())
+        .map(|nearest| nearest.region)
+        .filter(|region| {
+            region
+                .chars()
+                .all(|character| character.is_ascii_alphanumeric() || character == '-')
+        })
+        .unwrap_or_default()
+}
 
 #[derive(Deserialize)]
 struct SlackHuddleJoinResponse {
@@ -40,9 +67,14 @@ impl SlackApiClient {
         &self,
         request: &SlackHuddleJoinRequest,
     ) -> Result<SlackHuddleJoinReceipt, String> {
+        let region = if request.region.is_empty() {
+            nearest_chime_region()
+        } else {
+            request.region.clone()
+        };
         let mut params = vec![
             ("channel_id", request.conversation_id.clone()),
-            ("regions", request.region.clone()),
+            ("regions", region),
             ("multidevice", request.multidevice.to_string()),
         ];
         if let Some(room_id) = request.room_id.as_ref() {
