@@ -234,6 +234,20 @@ macro_rules! impl_workspace_api_reads {
             self.loader.load_reaction_catalog()
         }
 
+        fn join_slack_huddle(
+            &self,
+            request: crate::model::SlackHuddleJoinRequest,
+        ) -> Result<crate::model::SlackHuddleJoinReceipt, String> {
+            self.loader.join_huddle(&request)
+        }
+
+        fn leave_slack_huddle(
+            &self,
+            request: crate::model::SlackHuddleLeaveRequest,
+        ) -> Result<(), String> {
+            self.loader.leave_huddle(&request)
+        }
+
         fn load_slack_emoji_packs(&self) -> Result<Vec<crate::model::SlackEmojiPack>, String> {
             self.loader.load_emoji_packs()
         }
