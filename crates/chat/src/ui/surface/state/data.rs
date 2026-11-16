@@ -266,6 +266,8 @@ pub struct SurfaceStateData {
     pub(crate) slack_huddle_error: Option<gpui::SharedString>,
     pub(crate) slack_add_emoji_dialog: Option<super::super::SlackAddEmojiDialog>,
     pub(crate) slack_add_emoji_generation: u64,
+    /// The window title last set, so it is only set when it changes.
+    pub(crate) slack_window_title: String,
     pub(crate) slack_message_delete_generation: u64,
     pub(crate) slack_pending_message_delete: Option<SlackMessageDeleteRequest>,
     pub(crate) slack_message_mark_unread_generation: u64,

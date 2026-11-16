@@ -73,6 +73,7 @@ mod profile;
 mod query;
 mod add_emoji;
 mod reaction_picker;
+mod window_title;
 mod reactions;
 mod realtime;
 mod remote_draft_files;
