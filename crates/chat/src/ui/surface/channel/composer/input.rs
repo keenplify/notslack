@@ -2,9 +2,9 @@ use std::rc::Rc;
 
 use gpui::SharedString;
 use gpui_components::text_input::{
-    TextInputAction, TextInputChange, TextInputEnterBehavior, TextInputMode,
-    TextInputPreMutationAction, TextInputPreMutationActionHandler, TextInputPreMutationDecision,
-    TextInputProps, TextInputStyle,
+    TextInputAction, TextInputChange, TextInputEnterBehavior, TextInputKeyDownPreAction,
+    TextInputMode, TextInputPreMutationAction, TextInputPreMutationActionHandler,
+    TextInputPreMutationDecision, TextInputProps, TextInputStyle,
 };
 
 use crate::ui::surface::SlackPastedAttachment;
@@ -69,6 +69,9 @@ impl SurfaceState {
             .on_focus(callbacks.on_focus)
             .on_layout_change(callbacks.on_layout_change)
             .on_pre_mutation_action(Self::slack_composer_on_pre_mutation(cx))
+            .on_key_down_before_default(Self::slack_composer_suggestion_keys(cx, |_| {
+                Some(super::super::SlackComposerTarget::Main)
+            }))
     }
 
     /// A paste holding an image or copied files attaches them instead of
@@ -91,6 +94,32 @@ impl SurfaceState {
                 })
                 .ok();
             TextInputPreMutationDecision::Handled
+        })
+    }
+
+    /// Up and Down move through the mention suggestions while they are open
+    /// for the composer `target` names; otherwise they move the caret.
+    pub(in crate::ui::surface) fn slack_composer_suggestion_keys(
+        cx: &mut Context<Self>,
+        target: fn(&SurfaceState) -> Option<super::super::SlackComposerTarget>,
+    ) -> TextInputKeyDownPreAction {
+        let surface = cx.entity().downgrade();
+        Rc::new(move |_snapshot, event, _window, cx| {
+            let step = match event.keystroke.key.as_str() {
+                "up" => -1,
+                "down" => 1,
+                _ => return false,
+            };
+            if event.keystroke.modifiers.modified() {
+                return false;
+            }
+            surface
+                .update(cx, |surface, cx| {
+                    target(surface).is_some_and(|target| {
+                        surface.move_slack_composer_aux_selection(&target, step, cx)
+                    })
+                })
+                .unwrap_or(false)
         })
     }
 

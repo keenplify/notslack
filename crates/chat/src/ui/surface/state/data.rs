@@ -273,6 +273,8 @@ pub struct SurfaceStateData {
     pub(crate) slack_message_mark_unread_generation: u64,
     pub(crate) slack_pending_message_mark_unread: Option<SlackMessageMarkUnreadRequest>,
     pub(crate) slack_aux_panel: Option<SlackAuxPanelState>,
+    /// The suggestion Up and Down have moved to; Enter picks it.
+    pub(crate) slack_aux_panel_selected: usize,
     pub(crate) slack_composer_aux_target: Option<SlackComposerTarget>,
     pub(crate) slack_mention_picker_state: Option<SlackMentionPickerState>,
     pub(super) slack_mention_people: Option<super::mention::people::SlackMentionPeople>,
