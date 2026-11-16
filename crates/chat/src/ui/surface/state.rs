@@ -70,6 +70,7 @@ mod permalink;
 mod pins;
 mod presence;
 mod profile;
+mod profile_dm;
 mod query;
 mod add_emoji;
 mod reaction_picker;
