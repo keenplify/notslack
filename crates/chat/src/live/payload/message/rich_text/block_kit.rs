@@ -54,13 +54,44 @@ enum SlackWireBlockKitText {
 impl SlackWireBlockKitText {
     fn into_model(self) -> Option<SlackBlockKitText> {
         let (text, kind) = match self {
-            Self::Plain { text } => (text, SlackBlockKitTextKind::Plain),
+            Self::Plain { text } => (slack_plain_text_emoji(&text), SlackBlockKitTextKind::Plain),
             Self::Markdown { text } => (text, SlackBlockKitTextKind::Markdown),
             Self::Unsupported => return None,
         };
         let text = text.trim().to_string();
         (!text.is_empty()).then_some(SlackBlockKitText { text, kind })
     }
+}
+
+/// Plain text in Block Kit draws `:sparkles:` as ✨, as Slack does; codes
+/// that aren't standard emoji stay as typed.
+fn slack_plain_text_emoji(text: &str) -> String {
+    let mut result = String::with_capacity(text.len());
+    let mut rest = text;
+    while let Some(start) = rest.find(':') {
+        let after = &rest[start + 1..];
+        let code_end = after.find(':').filter(|&end| {
+            end > 0
+                && after[..end]
+                    .chars()
+                    .all(|character| character.is_ascii_alphanumeric() || "_+-".contains(character))
+        });
+        match code_end
+            .and_then(|end| emojis::get_by_shortcode(&after[..end]).map(|emoji| (end, emoji)))
+        {
+            Some((end, emoji)) => {
+                result.push_str(&rest[..start]);
+                result.push_str(emoji.as_str());
+                rest = &after[end + 1..];
+            }
+            None => {
+                result.push_str(&rest[..=start]);
+                rest = after;
+            }
+        }
+    }
+    result.push_str(rest);
+    result
 }
 
 #[derive(Deserialize)]
@@ -495,6 +526,24 @@ mod tests {
                     accessory: None,
                 },
             ]
+        );
+    }
+}
+
+#[cfg(test)]
+mod plain_text_emoji_tests {
+    use super::slack_plain_text_emoji;
+
+    #[test]
+    fn emoji_codes_in_plain_text_become_emoji() {
+        assert_eq!(
+            slack_plain_text_emoji(":sparkles: AI Summarize"),
+            "✨ AI Summarize"
+        );
+        assert_eq!(slack_plain_text_emoji("at 10:30: done"), "at 10:30: done");
+        assert_eq!(
+            slack_plain_text_emoji(":not-an-emoji-code: x"),
+            ":not-an-emoji-code: x"
         );
     }
 }
