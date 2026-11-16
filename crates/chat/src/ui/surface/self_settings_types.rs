@@ -123,6 +123,11 @@ pub(crate) fn slack_status_emoji_glyph(shortcode: &str) -> Option<String> {
     if name.is_empty() {
         return None;
     }
+    // Slack's names that the emoji table spells differently.
+    let name = match name {
+        "spiral_calendar_pad" => "spiral_calendar",
+        name => name,
+    };
     Some(
         emojis::get_by_shortcode(name)
             .map_or_else(|| format!(":{name}:"), |emoji| emoji.as_str().to_string()),
