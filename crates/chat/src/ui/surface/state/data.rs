@@ -268,6 +268,8 @@ pub struct SurfaceStateData {
     pub(crate) slack_aux_panel: Option<SlackAuxPanelState>,
     /// The suggestion Up and Down have moved to; Enter picks it.
     pub(crate) slack_aux_panel_selected: usize,
+    /// The query the selection belongs to; a new query starts from the top.
+    pub(crate) slack_aux_panel_selected_query: Option<String>,
     pub(crate) slack_composer_aux_target: Option<SlackComposerTarget>,
     pub(crate) slack_mention_picker_state: Option<SlackMentionPickerState>,
     pub(crate) slack_pending_conversation_id: Option<String>,
