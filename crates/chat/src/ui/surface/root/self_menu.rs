@@ -16,6 +16,7 @@ use crate::ui::{alpha, SlackUserPresence, SlackWorkspace};
 
 const MENU_WIDTH: f32 = 300.0;
 const SUBMENU_WIDTH: f32 = 260.0;
+const SUBMENU_BOTTOM_OFFSET: f32 = 17.0 + 2.0 * 28.0 + 12.0 + 1.0;
 const MENU_BG: u32 = 0x222529;
 const MENU_BORDER: u32 = 0x3a3d42;
 const MENU_TEXT: u32 = 0xf8f8f8;
@@ -187,10 +188,8 @@ impl SurfaceState {
                 .cursor_pointer()
                 .hover(|style| style.border_color(rgb(0x8a8b8d)).bg(rgb(0x2c2f33)))
                 .focus_visible(|style| style.border_color(rgb(0x1d9bd1)))
-                .on_hover(cx.listener(|this, hovered: &bool, _, cx| {
-                    if *hovered {
-                        this.set_slack_self_menu_notifications_open(false, cx);
-                    }
+                .on_mouse_move(cx.listener(|this, _: &gpui::MouseMoveEvent, _, cx| {
+                    this.set_slack_self_menu_notifications_open(false, cx);
                 }))
                 .on_click(cx.listener(|this, _, _, cx| this.open_slack_self_status_dialog(cx)))
                 .on_key_down(cx.listener(|this, event: &KeyDownEvent, window, cx| {
@@ -233,10 +232,8 @@ impl SurfaceState {
             )
             .justify_between()
             .when(open, |this| this.bg(rgb(MENU_HOVER_BG)))
-            .on_hover(cx.listener(|this, hovered: &bool, _, cx| {
-                if *hovered {
-                    this.set_slack_self_menu_notifications_open(true, cx);
-                }
+            .on_mouse_move(cx.listener(|this, _: &gpui::MouseMoveEvent, _, cx| {
+                this.set_slack_self_menu_notifications_open(true, cx);
             }))
             .child("Notifications")
             .child(
@@ -265,7 +262,9 @@ impl SurfaceState {
     ) -> Stateful<Div> {
         slack_self_menu_container("slack-self-notifications-menu", SUBMENU_WIDTH, cx)
             .left(px(MENU_WIDTH - 6.0))
-            .top(px(-12.0))
+            // Down to the menu's bottom edge, below the divider and the
+            // last two rows, so it stays inside the window.
+            .bottom(px(-SUBMENU_BOTTOM_OFFSET))
             .when(paused, |this| {
                 this.child(
                     self.slack_self_menu_row(
@@ -339,10 +338,8 @@ impl SurfaceState {
         if id == "slack-self-notifications" {
             return row;
         }
-        row.on_hover(cx.listener(|this, hovered: &bool, _, cx| {
-            if *hovered {
-                this.set_slack_self_menu_notifications_open(false, cx);
-            }
+        row.on_mouse_move(cx.listener(|this, _: &gpui::MouseMoveEvent, _, cx| {
+            this.set_slack_self_menu_notifications_open(false, cx);
         }))
     }
 }
