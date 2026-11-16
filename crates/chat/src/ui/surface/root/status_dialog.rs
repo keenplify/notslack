@@ -4,7 +4,7 @@
 
 use gpui::prelude::FluentBuilder;
 use gpui::{
-    div, point, px, relative, rgb, AnyElement, BoxShadow, Context, Div, FontWeight,
+    deferred, div, point, px, relative, rgb, AnyElement, BoxShadow, Context, Div, FontWeight,
     InteractiveElement, IntoElement, KeyDownEvent, MouseButton, MouseDownEvent, ParentElement,
     Role, Stateful, StatefulInteractiveElement, Styled,
 };
@@ -142,7 +142,10 @@ impl SurfaceState {
                     ),
             )
             .when(dialog.emoji_picker_open, |this| {
-                this.child(self.slack_status_emoji_picker(dialog, palette, cx))
+                // Deferred, so it paints over the rest of the dialog.
+                this.child(deferred(
+                    self.slack_status_emoji_picker(dialog, palette, cx),
+                ))
             })
     }
 
@@ -312,7 +315,7 @@ impl SurfaceState {
                     .relative()
                     .child(button)
                     .when(dialog.expiration_menu_open, |this| {
-                        this.child(slack_status_expiration_menu(dialog, palette, cx))
+                        this.child(deferred(slack_status_expiration_menu(dialog, palette, cx)))
                     }),
             )
     }
@@ -355,14 +358,7 @@ fn slack_status_expiration_menu(
                     this.choose_slack_status_expiration(preset, cx);
                 }))
                 .child(preset.label())
-                .when(selected, |this| {
-                    this.child(slack_icon(
-                        SlackShellIcon::MenuCheck,
-                        palette.main_text,
-                        16.0,
-                        cx,
-                    ))
-                })
+                .when(selected, |this| this.child("✓"))
         }))
 }
 
