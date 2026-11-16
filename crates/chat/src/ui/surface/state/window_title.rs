@@ -6,9 +6,6 @@ use crate::ui::{SlackConversationKind, Window};
 
 impl SurfaceState {
     pub(crate) fn sync_slack_window_title(&mut self, window: &mut Window) {
-        if self.embedded_shell {
-            return;
-        }
         let title = self.slack_window_title();
         if title != self.slack_window_title {
             window.set_window_title(&title);
