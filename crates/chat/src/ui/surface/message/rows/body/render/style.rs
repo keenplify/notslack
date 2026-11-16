@@ -136,7 +136,8 @@ fn slack_message_default_text_style(
             | SlackMessageBodyBlockKind::BlockKitHeader
             | SlackMessageBodyBlockKind::BlockKitContext
             | SlackMessageBodyBlockKind::BlockKitDivider
-            | SlackMessageBodyBlockKind::BlockKitActions => "Lato".into(),
+            | SlackMessageBodyBlockKind::BlockKitActions
+            | SlackMessageBodyBlockKind::BlockKitWorkObject => "Lato".into(),
         },
         ..Default::default()
     }

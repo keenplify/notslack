@@ -39,6 +39,7 @@ impl SlackMessageBody {
                     };
                     Some(image.image_url.as_ref())
                 }))
+                .chain(block.work_object.iter().flat_map(|card| card.image_urls()))
         })
     }
 }
@@ -67,6 +68,7 @@ pub(crate) enum SlackMessageBodyBlockKind {
     BlockKitContext,
     BlockKitDivider,
     BlockKitActions,
+    BlockKitWorkObject,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -124,6 +126,7 @@ pub(crate) struct SlackMessageBodyBlock {
     pub(crate) accessory_image: Option<SlackMessageBodyImage>,
     pub(crate) context_elements: Arc<[SlackMessageBodyContextElement]>,
     pub(crate) actions: Arc<[SlackMessageBodyAction]>,
+    pub(crate) work_object: Option<Arc<crate::model::SlackWorkObject>>,
     pub(crate) element_ids: SlackMessageElementIds,
 }
 

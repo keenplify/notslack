@@ -86,6 +86,7 @@ pub(super) struct SlackMessageBodyBlockBuilder {
     accessory_image: Option<SlackMessageBodyImage>,
     context_elements: Vec<SlackMessageBodyContextElement>,
     actions: Vec<SlackMessageBodyAction>,
+    work_object: Option<std::sync::Arc<crate::model::SlackWorkObject>>,
 }
 
 impl SlackMessageBodyBlockBuilder {
@@ -99,7 +100,12 @@ impl SlackMessageBodyBlockBuilder {
             accessory_image: None,
             context_elements: Vec::new(),
             actions: Vec::new(),
+            work_object: None,
         }
+    }
+
+    pub(super) fn set_work_object(&mut self, card: crate::model::SlackWorkObject) {
+        self.work_object = Some(std::sync::Arc::new(card));
     }
 
     pub(super) fn push_field(&mut self, field: SlackMessageBodyBlockBuilder) {
@@ -183,6 +189,7 @@ impl SlackMessageBodyBlockBuilder {
             || self.accessory_image.is_some()
             || !self.context_elements.is_empty()
             || !self.actions.is_empty()
+            || self.work_object.is_some()
             || self.kind == SlackMessageBodyBlockKind::BlockKitDivider
     }
 
@@ -218,6 +225,7 @@ impl SlackMessageBodyBlockBuilder {
             accessory_image,
             context_elements,
             actions,
+            work_object,
         } = self;
         let link_ranges = links
             .iter()
@@ -240,6 +248,7 @@ impl SlackMessageBodyBlockBuilder {
             accessory_image,
             context_elements: context_elements.into(),
             actions: actions.into(),
+            work_object,
             element_ids,
         }
     }
