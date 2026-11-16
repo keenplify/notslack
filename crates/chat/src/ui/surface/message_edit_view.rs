@@ -38,6 +38,8 @@ pub(crate) struct SlackMessageEditView {
     /// How many lines the input showed last render; the message list is
     /// remeasured when it changes.
     visible_lines: usize,
+    /// Whether the message list has scrolled the editor into view yet.
+    revealed: bool,
 }
 
 impl SlackMessageEditView {
@@ -72,6 +74,7 @@ impl SlackMessageEditView {
             pending: false,
             error: None,
             visible_lines: 1,
+            revealed: false,
         }
     }
 
@@ -328,13 +331,26 @@ impl Render for SlackMessageEditView {
             .read(cx)
             .measured_line_count()
             .clamp(1, SLACK_MESSAGE_EDIT_MAX_VISIBLE_LINES);
-        if visible_lines != self.visible_lines {
+        if visible_lines != self.visible_lines || !self.revealed {
             self.visible_lines = visible_lines;
+            self.revealed = true;
             let surface = self.surface.clone();
+            let message_id = self.target.message_timestamp.as_str().to_string();
             cx.defer(move |cx| {
                 surface
                     .update(cx, |surface, cx| {
                         surface.slack_message_list_state.remeasure();
+                        // Keep the whole editor in view as it opens and grows,
+                        // even on the last message.
+                        if let Some(index) = surface
+                            .slack_message_rows
+                            .iter()
+                            .position(|row| row.id == message_id)
+                        {
+                            surface
+                                .slack_message_list_state
+                                .scroll_to_reveal_item(index);
+                        }
                         cx.notify();
                     })
                     .ok();
