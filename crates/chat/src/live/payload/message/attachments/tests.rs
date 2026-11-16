@@ -133,6 +133,7 @@ fn an_app_card_attachment_shows_its_blocks_instead_of_no_preview_available() {
             "attachments": [{
                 "fallback": "[no preview available]",
                 "service_name": "geniused.atlassian.net",
+                "color": "#1d9bd1",
                 "blocks": [
                     {
                         "type": "section",
@@ -155,7 +156,16 @@ fn an_app_card_attachment_shows_its_blocks_instead_of_no_preview_available() {
         "the card shows as blocks, not as an attachment"
     );
     let body = message.rich_body.expect("rich body");
-    assert_eq!(body.block_kit.len(), 2);
+    let [crate::model::SlackBlockKitBlock::Attachment { color, blocks }] =
+        body.block_kit.as_slice()
+    else {
+        panic!(
+            "the card's blocks stay together as one attachment: {:?}",
+            body.block_kit
+        );
+    };
+    assert_eq!(color.as_deref(), Some("#1d9bd1"));
+    assert_eq!(blocks.len(), 2);
     assert!(message.body.contains("Task GE-9776 in Jira Cloud"));
     assert!(!message.body.contains("no preview available"));
 }

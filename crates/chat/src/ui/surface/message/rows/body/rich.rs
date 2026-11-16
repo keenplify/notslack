@@ -119,6 +119,13 @@ fn push_slack_block_kit_block(
             block.set_work_object((**card).clone());
             prepared.push_block(block);
         }
+        SlackBlockKitBlock::Attachment { color, blocks } => {
+            prepared.begin_attachment(color.as_deref());
+            for block in blocks {
+                push_slack_block_kit_block(prepared, block);
+            }
+            prepared.end_attachment();
+        }
     }
 }
 

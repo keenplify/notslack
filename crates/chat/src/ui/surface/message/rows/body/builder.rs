@@ -1,7 +1,7 @@
 use crate::ui::surface::{
-    SlackMessageBody, SlackMessageBodyAction, SlackMessageBodyBlock, SlackMessageBodyBlockKind,
-    SlackMessageBodyContextElement, SlackMessageBodyImage, SlackMessageBodyLink,
-    SlackMessageBodyStyleRange, SlackMessageBodyTarget, SlackMessageBodyText,
+    SlackMessageBody, SlackMessageBodyAction, SlackMessageBodyAttachment, SlackMessageBodyBlock,
+    SlackMessageBodyBlockKind, SlackMessageBodyContextElement, SlackMessageBodyImage,
+    SlackMessageBodyLink, SlackMessageBodyStyleRange, SlackMessageBodyTarget, SlackMessageBodyText,
     SlackMessageElementIds, SlackMessageTextStyle,
 };
 
@@ -10,6 +10,8 @@ pub(super) struct SlackMessageBodyBuilder<'a> {
     text: String,
     links: Vec<SlackMessageBodyLink>,
     blocks: Vec<SlackMessageBodyBlock>,
+    attachment: Option<SlackMessageBodyAttachment>,
+    attachment_count: usize,
 }
 
 impl<'a> SlackMessageBodyBuilder<'a> {
@@ -19,7 +21,22 @@ impl<'a> SlackMessageBodyBuilder<'a> {
             text: String::new(),
             links: Vec::new(),
             blocks: Vec::new(),
+            attachment: None,
+            attachment_count: 0,
         }
+    }
+
+    /// Blocks pushed until [`Self::end_attachment`] belong to one attachment.
+    pub(super) fn begin_attachment(&mut self, color: Option<&str>) {
+        self.attachment = Some(SlackMessageBodyAttachment {
+            index: self.attachment_count,
+            color: color.map(|color| color.to_string().into()),
+        });
+        self.attachment_count += 1;
+    }
+
+    pub(super) fn end_attachment(&mut self) {
+        self.attachment = None;
     }
 
     pub(super) fn push_block(&mut self, block: SlackMessageBodyBlockBuilder) {
@@ -27,7 +44,8 @@ impl<'a> SlackMessageBodyBuilder<'a> {
             return;
         }
         let block_index = self.blocks.len();
-        let block = block.finish(slack_message_element_ids(self.id_stem, block_index));
+        let mut block = block.finish(slack_message_element_ids(self.id_stem, block_index));
+        block.attachment = self.attachment.clone();
         self.push_aggregate_text(&block.text, &block.links);
         for field in block.fields.iter() {
             self.push_aggregate_text(&field.text, &field.links);
@@ -250,6 +268,7 @@ impl SlackMessageBodyBlockBuilder {
             actions: actions.into(),
             work_object,
             element_ids,
+            attachment: None,
         }
     }
 }

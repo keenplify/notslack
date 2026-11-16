@@ -34,8 +34,9 @@ pub(crate) fn slack_message_body(message: &Value, has_attachments: bool) -> Stri
 
 /// The Block Kit of the message's attachments. Apps such as Jira Cloud
 /// send their cards this way, with only "[no preview available]" outside
-/// the blocks. An attachment with a Work Object layout shows as Slack's
-/// card for it instead of its blocks; `as_of` is when it was shared.
+/// the blocks, beside the attachment's coloured bar. An attachment with a
+/// Work Object layout shows as Slack's card for it instead of its blocks;
+/// `as_of` is when it was shared.
 pub(super) fn slack_attachment_block_kit(
     message: &Value,
     as_of: Option<&str>,
@@ -50,7 +51,17 @@ pub(super) fn slack_attachment_block_kit(
         if let Some(card) = work_object::slack_work_object_block(attachment, as_of) {
             cards.push(card);
         } else if let Some(blocks) = attachment.get("blocks").and_then(Value::as_array) {
-            cards.extend(slack_block_kit_blocks(blocks, false));
+            let blocks = slack_block_kit_blocks(blocks, false);
+            if !blocks.is_empty() {
+                cards.push(crate::model::SlackBlockKitBlock::Attachment {
+                    color: attachment
+                        .get("color")
+                        .and_then(Value::as_str)
+                        .filter(|color| !color.is_empty())
+                        .map(str::to_string),
+                    blocks,
+                });
+            }
         }
     }
     cards
