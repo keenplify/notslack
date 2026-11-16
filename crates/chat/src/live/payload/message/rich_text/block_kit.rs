@@ -442,6 +442,9 @@ pub(super) fn label_slack_block_kit_mentions(
                     }
                 }
             }
+            SlackBlockKitBlock::Attachment { blocks, .. } => {
+                label_slack_block_kit_mentions(blocks, users);
+            }
             SlackBlockKitBlock::Divider
             | SlackBlockKitBlock::Actions { .. }
             | SlackBlockKitBlock::WorkObject { .. } => {}
