@@ -442,7 +442,9 @@ pub(super) fn label_slack_block_kit_mentions(
                     }
                 }
             }
-            SlackBlockKitBlock::Divider | SlackBlockKitBlock::Actions { .. } => {}
+            SlackBlockKitBlock::Divider
+            | SlackBlockKitBlock::Actions { .. }
+            | SlackBlockKitBlock::WorkObject { .. } => {}
         }
     }
 }
