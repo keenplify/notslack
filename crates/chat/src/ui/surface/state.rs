@@ -49,6 +49,7 @@ mod files;
 mod history;
 mod home_finder;
 mod huddle_call;
+mod hover_card;
 mod later;
 mod live_conversation;
 mod main_composer;

@@ -8,6 +8,7 @@ mod directory;
 mod drafts_sent;
 mod files;
 mod history;
+mod hover_card;
 mod later;
 mod add_emoji;
 mod message_delete;
@@ -241,6 +242,9 @@ impl SurfaceState {
             })
             .when(self.slack_add_emoji_dialog.is_some(), |this| {
                 this.child(self.render_slack_add_emoji_layer(cx))
+            })
+            .when_some(self.render_slack_hover_card(cx), |this, card| {
+                this.child(card)
             })
             .when(self.slack_self_status_dialog.is_some(), |this| {
                 this.child(self.render_slack_self_status_layer(cx))

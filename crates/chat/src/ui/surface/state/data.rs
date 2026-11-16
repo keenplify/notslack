@@ -268,6 +268,11 @@ pub struct SurfaceStateData {
     pub(crate) slack_add_emoji_generation: u64,
     /// The window title last set, so it is only set when it changes.
     pub(crate) slack_window_title: String,
+    /// The profile card shown while hovering a name or mention.
+    pub(crate) slack_hover_card: Option<super::super::SlackHoverCard>,
+    pub(crate) slack_hover_card_generation: u64,
+    /// Profiles loaded for hover cards, by user id.
+    pub(crate) slack_profile_cache: HashMap<String, crate::ui::SlackProfile>,
     pub(crate) slack_message_delete_generation: u64,
     pub(crate) slack_pending_message_delete: Option<SlackMessageDeleteRequest>,
     pub(crate) slack_message_mark_unread_generation: u64,
