@@ -31,6 +31,22 @@ pub(crate) fn slack_message_body(message: &Value, has_attachments: bool) -> Stri
     }
 }
 
+/// The Block Kit of the message's attachments. Apps such as Jira Cloud
+/// send their cards this way, with only "[no preview available]" outside
+/// the blocks.
+pub(super) fn slack_attachment_block_kit(message: &Value) -> Vec<crate::model::SlackBlockKitBlock> {
+    let blocks = message
+        .get("attachments")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(|attachment| attachment.get("blocks").and_then(Value::as_array))
+        .flatten()
+        .cloned()
+        .collect::<Vec<_>>();
+    slack_block_kit_blocks(&blocks, false)
+}
+
 fn slack_attachment_only_fallback(body: &str) -> bool {
     let body = body.trim();
     body.starts_with('<') && body.ends_with('>') && !body.contains(char::is_whitespace)
