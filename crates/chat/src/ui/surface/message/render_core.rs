@@ -236,7 +236,6 @@ impl SurfaceState {
 fn slack_message_editor_container(editor: Entity<SlackMessageEditView>) -> Div {
     div()
         .mt(px(8.0))
-        .h(px(80.0))
         .min_w(px(0.0))
         .flex_grow(1.0)
         .child(editor)
