@@ -290,7 +290,7 @@ fn slack_profile_contacts(profile: &SlackProfile, cx: &mut Context<SurfaceState>
 }
 
 /// The time where the person is, like "11:01 PM".
-fn slack_profile_local_time(timezone_id: &str) -> Option<String> {
+pub(in crate::ui::surface) fn slack_profile_local_time(timezone_id: &str) -> Option<String> {
     let zone = timezone_id.parse::<chrono_tz::Tz>().ok()?;
     Some(
         chrono::Utc::now()
