@@ -288,6 +288,15 @@ fn slack_block_kit_picker_action(
     })
 }
 
+/// One Block Kit button or menu from raw JSON.
+pub(super) fn slack_block_kit_action(raw: &Value) -> Option<SlackBlockKitAction> {
+    SlackWireBlockKitAction::deserialize(raw).ok()?.into_model()
+}
+
+pub(super) fn slack_block_kit_web_url(url: &str) -> bool {
+    slack_block_kit_supported_image_url(url)
+}
+
 fn slack_block_kit_image(image_url: String, alt_text: String) -> Option<SlackBlockKitImage> {
     slack_block_kit_supported_image_url(&image_url).then(|| SlackBlockKitImage {
         image_url,

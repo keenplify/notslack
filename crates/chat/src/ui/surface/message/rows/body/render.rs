@@ -15,6 +15,7 @@ use crate::ui::{
 
 mod block_kit;
 mod style;
+mod work_object;
 
 use block_kit::{
     render_slack_block_kit_actions, render_slack_block_kit_context, render_slack_block_kit_section,
@@ -218,6 +219,9 @@ fn slack_prepared_message_block_content(
         }
         SlackMessageBodyBlockKind::BlockKitActions => {
             return render_slack_block_kit_actions(block, style, cx);
+        }
+        SlackMessageBodyBlockKind::BlockKitWorkObject => {
+            return work_object::render_slack_work_object(block, style, surface, cx);
         }
         SlackMessageBodyBlockKind::Paragraph
         | SlackMessageBodyBlockKind::ListItem { .. }

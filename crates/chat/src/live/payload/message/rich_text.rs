@@ -1,5 +1,6 @@
 mod block_kit;
 mod reactions;
+mod work_object;
 
 use std::collections::HashMap;
 
@@ -33,18 +34,26 @@ pub(crate) fn slack_message_body(message: &Value, has_attachments: bool) -> Stri
 
 /// The Block Kit of the message's attachments. Apps such as Jira Cloud
 /// send their cards this way, with only "[no preview available]" outside
-/// the blocks.
-pub(super) fn slack_attachment_block_kit(message: &Value) -> Vec<crate::model::SlackBlockKitBlock> {
-    let blocks = message
+/// the blocks. An attachment with a Work Object layout shows as Slack's
+/// card for it instead of its blocks; `as_of` is when it was shared.
+pub(super) fn slack_attachment_block_kit(
+    message: &Value,
+    as_of: Option<&str>,
+) -> Vec<crate::model::SlackBlockKitBlock> {
+    let mut cards = Vec::new();
+    let attachments = message
         .get("attachments")
         .and_then(Value::as_array)
         .into_iter()
-        .flatten()
-        .filter_map(|attachment| attachment.get("blocks").and_then(Value::as_array))
-        .flatten()
-        .cloned()
-        .collect::<Vec<_>>();
-    slack_block_kit_blocks(&blocks, false)
+        .flatten();
+    for attachment in attachments {
+        if let Some(card) = work_object::slack_work_object_block(attachment, as_of) {
+            cards.push(card);
+        } else if let Some(blocks) = attachment.get("blocks").and_then(Value::as_array) {
+            cards.extend(slack_block_kit_blocks(blocks, false));
+        }
+    }
+    cards
 }
 
 fn slack_attachment_only_fallback(body: &str) -> bool {
@@ -178,6 +187,17 @@ fn slack_rich_text_inline(
                 .unwrap_or(false),
             style,
         }),
+        // An app's link chip, such as a Jira issue pasted into a message.
+        "attachment_mention" => Some(SlackRichTextInline::Link {
+            url: element.get("url").and_then(Value::as_str)?.to_string(),
+            label: element
+                .get("text")
+                .and_then(Value::as_str)
+                .filter(|label| !label.is_empty())
+                .map(str::to_string),
+            unsafe_url: false,
+            style,
+        }),
         "user" => slack_rich_text_user(element, users, style),
         "channel" => slack_rich_text_channel(element, sidebar_snapshot, style),
         "broadcast" => slack_rich_text_broadcast(element, style),
@@ -294,4 +314,32 @@ fn slack_rich_text_emoji_unicode(value: &str) -> Option<String> {
                 .and_then(char::from_u32)
         })
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::HashMap;
+
+    use serde_json::json;
+
+    use super::slack_rich_text_inline;
+    use crate::model::SlackRichTextInline;
+
+    #[test]
+    fn app_link_chips_render_as_links() {
+        let element = json!({
+            "type": "attachment_mention",
+            "url": "https://example.atlassian.net/browse/GE-1",
+            "text": "Update the prospect form",
+            "app_id": "A1",
+            "product_name": "Jira Cloud",
+        });
+        let Some(SlackRichTextInline::Link { url, label, .. }) =
+            slack_rich_text_inline(&element, &HashMap::new(), None)
+        else {
+            panic!("an attachment mention should become a link");
+        };
+        assert_eq!(url, "https://example.atlassian.net/browse/GE-1");
+        assert_eq!(label.as_deref(), Some("Update the prospect form"));
+    }
 }

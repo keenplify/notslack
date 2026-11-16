@@ -56,6 +56,18 @@ pub(super) fn slack_message_from_value_with_context(
     )
 }
 
+/// When a card was shared, as Slack's "As of" footer shows it.
+fn slack_card_shared_at(timestamp: &str, timezone: Tz) -> Option<String> {
+    let seconds = timestamp.split('.').next()?.parse::<i64>().ok()?;
+    let shared = chrono::DateTime::<chrono::Utc>::from_timestamp(seconds, 0)?;
+    Some(
+        shared
+            .with_timezone(&timezone)
+            .format("%b %-d at %-I:%M %p")
+            .to_string(),
+    )
+}
+
 pub(crate) fn slack_message_from_value_with_context_in_timezone(
     message: Value,
     users: &HashMap<String, Value>,
@@ -73,7 +85,9 @@ pub(crate) fn slack_message_from_value_with_context_in_timezone(
     // An attachment that is a Block Kit card shows as those blocks under the
     // message, in place of its "[no preview available]" placeholder.
     let attachment_cards = rich_body.as_mut().is_some_and(|body| {
-        let cards = slack_attachment_block_kit(&message);
+        let as_of = string_at(&message, &["ts"])
+            .and_then(|timestamp| slack_card_shared_at(&timestamp, timezone));
+        let cards = slack_attachment_block_kit(&message, as_of.as_deref());
         let any = !cards.is_empty();
         body.block_kit.extend(cards);
         any
