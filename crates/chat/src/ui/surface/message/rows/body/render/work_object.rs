@@ -111,6 +111,7 @@ fn work_object_title(
         })
         .child(
             div()
+                .flex_1()
                 .min_w(px(0.0))
                 .flex()
                 .flex_col()
