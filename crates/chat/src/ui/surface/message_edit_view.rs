@@ -325,7 +325,7 @@ impl SlackMessageEditView {
 }
 
 impl Render for SlackMessageEditView {
-    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let visible_lines = self
             .input
             .read(cx)
@@ -335,25 +335,39 @@ impl Render for SlackMessageEditView {
             self.visible_lines = visible_lines;
             self.revealed = true;
             let surface = self.surface.clone();
+            cx.defer({
+                let surface = surface.clone();
+                move |cx| {
+                    surface
+                        .update(cx, |surface, cx| {
+                            surface.slack_message_list_state.remeasure();
+                            cx.notify();
+                        })
+                        .ok();
+                }
+            });
+            // Keep the whole editor in view as it opens and grows, even on
+            // the last message. The list only knows the new height once it
+            // has laid the row out again, so reveal it the frame after.
             let message_id = self.target.message_timestamp.as_str().to_string();
-            cx.defer(move |cx| {
-                surface
-                    .update(cx, |surface, cx| {
-                        surface.slack_message_list_state.remeasure();
-                        // Keep the whole editor in view as it opens and grows,
-                        // even on the last message.
-                        if let Some(index) = surface
-                            .slack_message_rows
-                            .iter()
-                            .position(|row| row.id == message_id)
-                        {
-                            surface
-                                .slack_message_list_state
-                                .scroll_to_reveal_item(index);
-                        }
-                        cx.notify();
-                    })
-                    .ok();
+            window.on_next_frame(move |window, _| {
+                window.on_next_frame(move |_, cx| {
+                    surface
+                        .update(cx, |surface, cx| {
+                            if let Some(index) = surface
+                                .slack_message_rows
+                                .iter()
+                                .position(|row| row.id == message_id)
+                            {
+                                surface
+                                    .slack_message_list_state
+                                    .scroll_to_reveal_item(index);
+                                cx.notify();
+                            }
+                        })
+                        .ok();
+                });
+                window.refresh();
             });
         }
         let input_height = slack_message_edit_input_height(self.visible_lines);
