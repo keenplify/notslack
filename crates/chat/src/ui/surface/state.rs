@@ -88,6 +88,7 @@ mod self_settings;
 mod sending;
 mod sidebar_section;
 mod slackbot;
+mod status_emoji;
 mod thread;
 mod thread_reply;
 mod utils;

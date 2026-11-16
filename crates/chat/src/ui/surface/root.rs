@@ -24,6 +24,7 @@ mod search;
 mod self_menu;
 mod self_settings;
 mod sidebar_section;
+mod status_dialog;
 
 use resize_drag::DraggedSlackSidebarResize;
 
