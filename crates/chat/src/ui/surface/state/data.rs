@@ -273,6 +273,8 @@ pub struct SurfaceStateData {
     pub(crate) slack_hover_card_generation: u64,
     /// Profiles loaded for hover cards, by user id.
     pub(crate) slack_profile_cache: HashMap<String, crate::ui::SlackProfile>,
+    /// A draft attachment's image opened large, with its file name.
+    pub(crate) slack_attachment_preview: Option<(gpui::SharedString, Arc<gpui::Image>)>,
     pub(crate) slack_message_delete_generation: u64,
     pub(crate) slack_pending_message_delete: Option<SlackMessageDeleteRequest>,
     pub(crate) slack_message_mark_unread_generation: u64,
