@@ -35,16 +35,23 @@ pub(crate) fn slack_message_body(message: &Value, has_attachments: bool) -> Stri
 /// send their cards this way, with only "[no preview available]" outside
 /// the blocks.
 pub(super) fn slack_attachment_block_kit(message: &Value) -> Vec<crate::model::SlackBlockKitBlock> {
-    let blocks = message
+    message
         .get("attachments")
         .and_then(Value::as_array)
         .into_iter()
         .flatten()
-        .filter_map(|attachment| attachment.get("blocks").and_then(Value::as_array))
-        .flatten()
-        .cloned()
-        .collect::<Vec<_>>();
-    slack_block_kit_blocks(&blocks, false)
+        .filter_map(|attachment| {
+            let blocks = slack_block_kit_blocks(attachment.get("blocks")?.as_array()?, false);
+            (!blocks.is_empty()).then(|| crate::model::SlackBlockKitBlock::Attachment {
+                color: attachment
+                    .get("color")
+                    .and_then(Value::as_str)
+                    .filter(|color| !color.is_empty())
+                    .map(str::to_string),
+                blocks,
+            })
+        })
+        .collect()
 }
 
 fn slack_attachment_only_fallback(body: &str) -> bool {
