@@ -4261,6 +4261,7 @@ dependencies = [
  "notslack-media-capture",
  "raw-window-handle",
  "serde",
+ "serde_json",
  "theme",
  "wayland-backend",
  "wayland-client",
