@@ -150,7 +150,7 @@ impl SurfaceState {
             .flex()
             .items_start()
             .gap(px(8.0))
-            .when(editing, |this| this.h(px(96.0)).bg(alpha(0xf2c744, 0.20)))
+            .when(editing, |this| this.pb(px(8.0)).bg(alpha(0xf2c744, 0.20)))
             .when(!editing, |this| {
                 this.hover(|style| style.bg(alpha(0x000000, 0.08)))
             })
