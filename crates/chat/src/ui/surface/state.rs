@@ -83,6 +83,7 @@ mod remote_draft_files;
 mod schedule;
 mod search;
 mod selection;
+mod self_notifications;
 mod self_settings;
 mod sending;
 mod sidebar_section;
@@ -110,6 +111,7 @@ pub(crate) use schedule::{
     SlackScheduleNestedPicker, SlackScheduleOverlay, SlackScheduleOverlayState,
     SlackScheduleTimeOption, SlackScheduleTimePickerState,
 };
+pub(crate) use self_notifications::SlackNotificationPausePreset;
 type SlackSelfIdentity = (String, Option<String>, Option<String>, Option<String>);
 
 #[derive(Clone, Debug, PartialEq, Eq)]

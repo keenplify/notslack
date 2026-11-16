@@ -129,11 +129,11 @@ pub(crate) use state::{
     load_slack_prepared_upload_files_from_paths, load_slack_upload_files_from_paths,
     SlackDateJumpCalendarCell, SlackDateJumpCalendarCellStatus, SlackDateJumpMenuAction,
     SlackDateJumpMenuState, SlackDateJumpOverlay, SlackDateJumpPickerState, SlackDateJumpRequest,
-    SlackMessageNavigationHighlight, SlackMessageNavigationRequest, SlackScheduleAnchor,
-    SlackScheduleCalendarCell, SlackScheduleCalendarCellStatus, SlackScheduleCustomState,
-    SlackScheduleDatePickerState, SlackScheduleMenuState, SlackScheduleNestedPicker,
-    SlackScheduleOverlay, SlackScheduleOverlayState, SlackScheduleTimeOption,
-    SlackScheduleTimePickerState,
+    SlackMessageNavigationHighlight, SlackMessageNavigationRequest, SlackNotificationPausePreset,
+    SlackScheduleAnchor, SlackScheduleCalendarCell, SlackScheduleCalendarCellStatus,
+    SlackScheduleCustomState, SlackScheduleDatePickerState, SlackScheduleMenuState,
+    SlackScheduleNestedPicker, SlackScheduleOverlay, SlackScheduleOverlayState,
+    SlackScheduleTimeOption, SlackScheduleTimePickerState,
 };
 pub use surface_event_source::ChatEventSource;
 pub(crate) use surface_state_core::SurfaceStateConfig;
