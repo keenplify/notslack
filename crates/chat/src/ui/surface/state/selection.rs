@@ -336,6 +336,8 @@ impl SurfaceState {
         if panel.query_behavior != Some(super::SlackAuxPanelQueryBehavior::Mention) {
             self.slack_mention_picker_state = None;
         }
+        // New suggestions start from the top.
+        self.slack_aux_panel_selected = 0;
         if !matches!(
             panel.query_behavior,
             Some(
