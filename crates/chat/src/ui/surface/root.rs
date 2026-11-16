@@ -1,9 +1,11 @@
 mod activity;
+mod add_emoji;
 mod all_threads;
 mod attachment_preview;
 mod cached_views;
 mod channel_details;
 mod channel_menu;
+mod composer_link_menu;
 mod date_jump;
 mod directory;
 mod drafts_sent;
@@ -11,7 +13,6 @@ mod files;
 mod history;
 mod hover_card;
 mod later;
-mod add_emoji;
 mod message_delete;
 mod message_forward;
 mod message_menu;
@@ -251,6 +252,9 @@ impl SurfaceState {
                 self.render_slack_attachment_preview_layer(cx),
                 |this, layer| this.child(layer),
             )
+            .when_some(self.render_slack_composer_link_menu(cx), |this, menu| {
+                this.child(menu)
+            })
             .when(self.slack_self_status_dialog.is_some(), |this| {
                 this.child(self.render_slack_self_status_layer(cx))
             })

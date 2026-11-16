@@ -275,6 +275,8 @@ pub struct SurfaceStateData {
     pub(crate) slack_profile_cache: HashMap<String, crate::ui::SlackProfile>,
     /// A draft attachment's image opened large, with its file name.
     pub(crate) slack_attachment_preview: Option<(gpui::SharedString, Arc<gpui::Image>)>,
+    /// The menu opened by right-clicking a link in the main composer.
+    pub(crate) slack_composer_link_menu: Option<super::super::SlackComposerLinkMenu>,
     pub(crate) slack_message_delete_generation: u64,
     pub(crate) slack_pending_message_delete: Option<SlackMessageDeleteRequest>,
     pub(crate) slack_message_mark_unread_generation: u64,
