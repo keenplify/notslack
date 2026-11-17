@@ -122,6 +122,8 @@ pub(crate) enum SlackShellIcon {
     ViewerReset,
     ViewerDownload,
     ViewerThread,
+    TodoAdd,
+    TodoDone,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
