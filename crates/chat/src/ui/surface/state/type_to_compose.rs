@@ -50,8 +50,17 @@ impl SurfaceState {
     }
 
     /// Remembers which message box was used last, for typing with nothing
-    /// focused.
-    pub(crate) fn track_slack_last_composer(&mut self, window: &Window, cx: &Context<Self>) {
+    /// focused. A click on something that takes no focus leaves nothing
+    /// focused, and then keys reach no handler at all, so the surface takes
+    /// focus back.
+    pub(crate) fn track_slack_last_composer(
+        &mut self,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if self.active && window.focused(cx).is_none() {
+            window.focus(&self.focus_handle, cx);
+        }
         if self
             .slack_thread_composer_input
             .read(cx)
