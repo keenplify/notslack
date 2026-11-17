@@ -142,6 +142,12 @@ impl Render for Notslack {
             ..Viewport::default()
         };
         let theme = SurfaceTheme::for_appearance_mode(*cx.global::<AppearanceMode>());
+        // A click on something that takes no focus leaves nothing focused,
+        // and then keys reach no handler; the root takes them instead, so
+        // typing still goes into the message box.
+        if window.focused(cx).is_none() {
+            window.focus(&self.focus, cx);
+        }
         let root = div()
             .size_full()
             .track_focus(&self.focus)
