@@ -310,6 +310,7 @@ impl SurfaceState {
         let surface = self.render_slack_surface(workspace, cx);
         (div()
             .id("notslack-root")
+            .track_focus(&self.focus_handle)
             .size_full()
             .relative()
             .flex()
