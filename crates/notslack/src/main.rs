@@ -95,7 +95,7 @@ impl Notslack {
     fn on_key_down(&mut self, event: &KeyDownEvent, window: &mut Window, cx: &mut Context<Self>) {
         if let Content::Chat(root) = &mut self.content {
             if root.allows_workspace_shell_key_down(window, cx)
-                && root.handle_workspace_key_down(event, cx)
+                && root.handle_workspace_key_down(event, window, cx)
             {
                 cx.stop_propagation();
             }
