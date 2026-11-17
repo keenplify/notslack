@@ -24,6 +24,8 @@ const SLACK_LIGHTBOX_SLIDER_WIDTH: f32 = 96.0;
 const SLACK_LIGHTBOX_SLIDER_KNOB: f32 = 14.0;
 const SLACK_LIGHTBOX_ICON: u32 = 0xd1d2d3;
 const SLACK_LIGHTBOX_BORDER: u32 = 0x565856;
+/// The controls sit on a solid dark fill so they read over light images.
+const SLACK_LIGHTBOX_CONTROL_BG: u32 = 0x1a1d21;
 
 type SlackLightboxPress = Rc<dyn Fn(&mut SurfaceState, &mut Context<SurfaceState>)>;
 
@@ -293,12 +295,16 @@ impl SurfaceState {
             .when(bordered, |this| {
                 this.border_1().border_color(rgb(SLACK_LIGHTBOX_BORDER))
             })
-            .when(active, |this| this.bg(alpha(0xffffff, 0.16)))
+            .bg(if active {
+                rgb(0x3b3d42)
+            } else {
+                rgb(SLACK_LIGHTBOX_CONTROL_BG)
+            })
             .cursor_pointer()
             .flex()
             .items_center()
             .justify_center()
-            .hover(|style| style.bg(alpha(0xffffff, 0.12)))
+            .hover(|style| style.bg(rgb(0x35373b)))
             .on_mouse_down(MouseButton::Left, |_, _, cx| cx.stop_propagation())
             .on_click(cx.listener(move |this, _, _, cx| press(this, cx)))
             .tooltip(move |_, cx| {
@@ -380,6 +386,7 @@ impl SurfaceState {
             .rounded(px(8.0))
             .border_1()
             .border_color(rgb(SLACK_LIGHTBOX_BORDER))
+            .bg(rgb(SLACK_LIGHTBOX_CONTROL_BG))
             .flex()
             .items_center()
             .child(self.render_slack_lightbox_zoom_step("slack-lightbox-zoom-out", -1.0, cx))
@@ -409,7 +416,7 @@ impl SurfaceState {
             .flex()
             .items_center()
             .justify_center()
-            .hover(|style| style.bg(alpha(0xffffff, 0.12)))
+            .hover(|style| style.bg(rgb(0x35373b)))
             .on_mouse_down(MouseButton::Left, |_, _, cx| cx.stop_propagation())
             .on_click(cx.listener(move |this, _, _, cx| {
                 this.step_slack_lightbox_zoom(steps, cx);

@@ -374,7 +374,18 @@ impl SurfaceState {
         if let Some(view) = self.slack_lightbox_view_mut() {
             view.thread_shown = true;
         }
+        // Opening a thread closes previews elsewhere; here the thread goes
+        // beside the image, so the preview stays when the panel opened in
+        // place.
+        let expanded = self.slack_expanded_attachment.clone();
         self.open_slack_message_thread_target(&target, cx);
+        let opened_here = self.slack_thread_panel.as_ref().is_some_and(|panel| {
+            panel.conversation_id == target.conversation_id()
+                && panel.parent_message_id == target.root_timestamp().as_str()
+        });
+        if opened_here && self.slack_expanded_attachment.is_none() {
+            self.slack_expanded_attachment = expanded;
+        }
         cx.notify();
     }
 
