@@ -43,6 +43,11 @@ impl<'a> SlackMessageBodyBuilder<'a> {
         if !block.has_content() {
             return;
         }
+        let mut block = block;
+        if self.attachment.is_some() {
+            // Slack underlines the links in an app's attachment.
+            block.underline_links();
+        }
         let block_index = self.blocks.len();
         let mut block = block.finish(slack_message_element_ids(self.id_stem, block_index));
         block.attachment = self.attachment.clone();
@@ -160,6 +165,22 @@ impl SlackMessageBodyBlockBuilder {
                 &slack_decode_text_entities(text),
                 SlackMessageTextStyle::default(),
             );
+        }
+    }
+
+    fn underline_links(&mut self) {
+        underline_link_styles(&mut self.styles);
+        for field in &mut self.fields {
+            let mut styles = field.styles.to_vec();
+            underline_link_styles(&mut styles);
+            field.styles = styles.into();
+        }
+        for element in &mut self.context_elements {
+            if let SlackMessageBodyContextElement::Text(text) = element {
+                let mut styles = text.styles.to_vec();
+                underline_link_styles(&mut styles);
+                text.styles = styles.into();
+            }
         }
     }
 
@@ -299,4 +320,10 @@ pub(super) fn slack_supported_link_url(url: &str) -> bool {
         || url.starts_with("http://")
         || url.starts_with("mailto:")
         || url.starts_with("tel:")
+}
+
+fn underline_link_styles(styles: &mut [SlackMessageBodyStyleRange]) {
+    for range in styles.iter_mut().filter(|range| range.style.link) {
+        range.style.underline = true;
+    }
 }
