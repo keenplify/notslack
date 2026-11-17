@@ -92,6 +92,7 @@ mod slackbot;
 mod status_emoji;
 mod thread;
 mod thread_reply;
+mod type_to_compose;
 mod utils;
 mod video_clip;
 mod workspace;

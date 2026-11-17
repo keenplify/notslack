@@ -337,6 +337,8 @@ pub struct SurfaceStateData {
     pub(crate) slack_formatting_enabled: bool,
     pub(crate) slack_expanded_attachment: Option<SlackAttachmentSelection>,
     pub(crate) slack_lightbox: Option<crate::ui::surface::SlackLightboxView>,
+    /// The thread's reply box was the last message box used.
+    pub(crate) slack_last_composer_was_thread: bool,
     pub(crate) slack_collapsed_attachment_ids: HashSet<String>,
     pub(crate) slack_remote_images: SlackRemoteImageCache,
     pub(crate) slack_active_remote_image_urls: HashSet<String>,

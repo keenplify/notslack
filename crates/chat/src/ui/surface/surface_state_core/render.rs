@@ -175,6 +175,7 @@ impl Render for SurfaceState {
         self.schedule_slack_thread_read_visibility_check(window, cx);
         self.focus_pending_slack_surface_controls(window, cx);
         self.focus_pending_slack_text_inputs(window, cx);
+        self.track_slack_last_composer(window, cx);
         self.ensure_slack_render_observers(window, cx);
         self.sync_slack_window_title(window);
         if self.embedded_shell {
