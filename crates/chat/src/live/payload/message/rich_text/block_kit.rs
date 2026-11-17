@@ -407,7 +407,10 @@ pub(super) fn label_slack_block_kit_mentions(
     }
 }
 
-fn label_slack_mrkdwn_mentions(text: &str, users: &HashMap<String, Value>) -> String {
+pub(in crate::live::payload::message) fn label_slack_mrkdwn_mentions(
+    text: &str,
+    users: &HashMap<String, Value>,
+) -> String {
     let mut labeled = String::with_capacity(text.len());
     let mut rest = text;
     while let Some(start) = rest.find("<@") {
