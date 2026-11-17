@@ -7,7 +7,7 @@ use chrono_tz::Tz;
 use serde_json::{Map, Value};
 
 /// Rewrites every date token in a raw Slack message in place.
-pub(super) fn format_slack_date_tokens(message: &mut Value, timezone: Tz) {
+pub(in crate::live) fn format_slack_date_tokens(message: &mut Value, timezone: Tz) {
     format_slack_date_tokens_at(message, timezone, Utc::now());
 }
 

@@ -141,6 +141,7 @@ impl SurfaceState {
             return;
         }
         let Some(workspace_api) = self.active_slack_workspace_api() else {
+            eprintln!("[notslack-app-dm] details_skipped=no_workspace_api");
             return;
         };
         let Some(dm_app) = self
@@ -149,6 +150,7 @@ impl SurfaceState {
         else {
             return;
         };
+        eprintln!("[notslack-app-dm] details_requested");
         self.slack_app_dm
             .details
             .insert(key.clone(), SlackAppDmLoad::Loading);
@@ -181,8 +183,19 @@ impl SurfaceState {
         cx: &mut Context<Self>,
     ) {
         let load = match result {
-            Ok(details) => SlackAppDmLoad::Loaded(Arc::new(details)),
-            Err(error) => SlackAppDmLoad::Failed(error.into()),
+            Ok(details) => {
+                eprintln!(
+                    "[notslack-app-dm] details_loaded home_tab={} profile={} error={:?}",
+                    details.home_tab_enabled(),
+                    details.profile.is_some(),
+                    details.error
+                );
+                SlackAppDmLoad::Loaded(Arc::new(details))
+            }
+            Err(error) => {
+                eprintln!("[notslack-app-dm] details_failed error={error}");
+                SlackAppDmLoad::Failed(error.into())
+            }
         };
         self.slack_app_dm.details.insert(key.clone(), load);
         // Results for a conversation the user already left stay cached but

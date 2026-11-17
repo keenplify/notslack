@@ -84,9 +84,14 @@ impl SlackLiveWorkspaceLoader {
         if view_id.is_empty() {
             return Err("Slack App Home view_id must not be empty".to_string());
         }
-        let response = self
+        let mut response = self
             .api
             .post(SLACK_VIEWS_GET_METHOD, &[("view_id", view_id.to_string())])?;
+        // Times in the view are Slack date tokens, shown in the viewer's zone.
+        crate::live::payload::message::date_tokens::format_slack_date_tokens(
+            &mut response,
+            self.timezone.value.into(),
+        );
         slack_app_home_view_from_response(view_id, &response)
     }
 }

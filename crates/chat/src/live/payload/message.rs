@@ -1,5 +1,5 @@
 pub(crate) mod attachments;
-mod date_tokens;
+pub(in crate::live) mod date_tokens;
 mod history;
 mod rich_text;
 mod send_receipt;
