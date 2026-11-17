@@ -2,9 +2,12 @@
 //! the workspace's destination directory, loaded once per workspace the first
 //! time a mention picker opens.
 
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashSet, sync::Arc};
 
-use super::super::{Context, SlackAuxPanelQueryBehavior, SlackVisiblePersonRow, SurfaceState};
+use super::super::{
+    slack_aux_panel_matches_query, Context, SlackAuxPanelQueryBehavior, SlackVisiblePersonRow,
+    SurfaceState,
+};
 use crate::ui::{SlackDestinationDirectorySnapshot, SlackDestinationTarget};
 
 pub(in crate::ui::surface::state) struct SlackMentionPeople {
@@ -16,7 +19,28 @@ struct SlackMentionPerson {
     user_id: String,
     label: String,
     real_name: Option<String>,
+    /// Both names in lowercase, made once so typing a query only compares.
+    search_key: String,
 }
+
+impl SlackMentionPerson {
+    fn new(user_id: String, label: String, real_name: Option<String>) -> Self {
+        let search_key = match &real_name {
+            Some(real_name) => format!("{}\n{}", label, real_name),
+            None => label.clone(),
+        }
+        .to_ascii_lowercase();
+        Self {
+            user_id,
+            label,
+            real_name,
+            search_key,
+        }
+    }
+}
+
+/// The picker shows a handful of people; matching stops well past that.
+const SLACK_MENTION_PEOPLE_MATCH_LIMIT: usize = 50;
 
 impl SlackMentionPeople {
     fn from_directory(directory: SlackDestinationDirectorySnapshot) -> Self {
@@ -28,14 +52,11 @@ impl SlackMentionPeople {
                     return None;
                 };
                 let label = candidate.label.trim().to_string();
-                (!label.is_empty()).then(|| SlackMentionPerson {
-                    real_name: candidate
-                        .real_name
-                        .map(|real_name| real_name.trim().to_string())
-                        .filter(|real_name| !real_name.is_empty() && *real_name != label),
-                    user_id,
-                    label,
-                })
+                let real_name = candidate
+                    .real_name
+                    .map(|real_name| real_name.trim().to_string())
+                    .filter(|real_name| !real_name.is_empty() && *real_name != label);
+                (!label.is_empty()).then(|| SlackMentionPerson::new(user_id, label, real_name))
             })
             .collect();
         Self {
@@ -125,11 +146,13 @@ impl SurfaceState {
         }
     }
 
-    /// The people on screen first, then the rest of the workspace. Each row's
-    /// detail is the person's full name when it differs from the label, so a
-    /// query matches either name.
+    /// The people matching a query: those on screen first, then the rest
+    /// of the workspace, up to a limit. Each row's detail is the person's
+    /// full name when it differs from the label, so a query matches either
+    /// name.
     pub(in crate::ui::surface::state) fn slack_mention_people_rows(
         &self,
+        normalized_query: &str,
     ) -> Vec<SlackVisiblePersonRow> {
         let visible = self.slack_visible_people_rows();
         let team_id = self.slack_workspace().map(|workspace| &workspace.team_id);
@@ -138,31 +161,56 @@ impl SurfaceState {
             .as_ref()
             .filter(|people| Some(&people.team_id) == team_id)
         else {
-            return visible;
+            return visible
+                .into_iter()
+                .filter(|row| slack_mention_row_matches(row, normalized_query))
+                .take(SLACK_MENTION_PEOPLE_MATCH_LIMIT)
+                .collect();
         };
-        merge_slack_mention_people(visible, &directory.people)
+        merge_slack_mention_people(
+            visible,
+            &directory.people,
+            normalized_query,
+            SLACK_MENTION_PEOPLE_MATCH_LIMIT,
+        )
     }
 }
 
+fn slack_mention_row_matches(row: &SlackVisiblePersonRow, normalized_query: &str) -> bool {
+    slack_aux_panel_matches_query(normalized_query, &row.label)
+        || row
+            .detail
+            .as_deref()
+            .is_some_and(|detail| slack_aux_panel_matches_query(normalized_query, detail))
+}
+
+/// Typing in the picker runs this on every key, over everyone in the
+/// workspace, so it only compares precomputed lowercase names and stops at
+/// `limit` matches.
 fn merge_slack_mention_people(
     mut rows: Vec<SlackVisiblePersonRow>,
     people: &[SlackMentionPerson],
+    normalized_query: &str,
+    limit: usize,
 ) -> Vec<SlackVisiblePersonRow> {
-    let by_user_id = people
-        .iter()
-        .map(|person| (person.user_id.as_str(), person))
-        .collect::<HashMap<_, _>>();
     for row in &mut rows {
-        if let Some(person) = by_user_id.get(row.user_id.as_str()) {
+        if let Some(person) = people.iter().find(|person| person.user_id == row.user_id) {
             row.detail = person.real_name.clone().filter(|name| *name != row.label);
         }
     }
-    let on_screen = rows.len();
+    let on_screen = rows
+        .iter()
+        .map(|row| row.user_id.clone())
+        .collect::<HashSet<_>>();
+    rows.retain(|row| slack_mention_row_matches(row, normalized_query));
+    rows.truncate(limit);
     for person in people {
-        let listed = rows[..on_screen]
-            .iter()
-            .any(|row| row.user_id == person.user_id);
-        if !listed {
+        if rows.len() >= limit {
+            break;
+        }
+        if (normalized_query.is_empty() || person.search_key.contains(normalized_query))
+            && !on_screen.contains(&person.user_id)
+        {
             rows.push(SlackVisiblePersonRow {
                 user_id: person.user_id.clone(),
                 label: person.label.clone(),
@@ -179,11 +227,11 @@ mod tests {
     use super::*;
 
     fn person(user_id: &str, label: &str, real_name: Option<&str>) -> SlackMentionPerson {
-        SlackMentionPerson {
-            user_id: user_id.to_string(),
-            label: label.to_string(),
-            real_name: real_name.map(str::to_string),
-        }
+        SlackMentionPerson::new(
+            user_id.to_string(),
+            label.to_string(),
+            real_name.map(str::to_string),
+        )
     }
 
     fn row(user_id: &str, label: &str, detail: &str) -> SlackVisiblePersonRow {
@@ -215,6 +263,8 @@ mod tests {
                 person("U2", "Will", Some("Chenyuan Wang")),
                 person("U1", "Ada", Some("Ada Lovelace")),
             ],
+            "",
+            50,
         );
         assert_eq!(
             summary(&rows),
@@ -226,10 +276,25 @@ mod tests {
     }
 
     #[test]
+    fn a_query_matches_either_name_and_stops_at_the_limit() {
+        let people = [
+            person("U2", "Will", Some("Chenyuan Wang")),
+            person("U3", "Willa", None),
+            person("U4", "Grace", None),
+        ];
+        let rows = merge_slack_mention_people(Vec::new(), &people, "wang", 50);
+        assert_eq!(summary(&rows), [("U2", "Will", Some("Chenyuan Wang"))]);
+        let rows = merge_slack_mention_people(Vec::new(), &people, "will", 1);
+        assert_eq!(summary(&rows), [("U2", "Will", Some("Chenyuan Wang"))]);
+    }
+
+    #[test]
     fn a_person_missing_from_the_directory_keeps_their_row() {
         let rows = merge_slack_mention_people(
             vec![row("U9", "Guest", "Visible in the active conversation.")],
             &[],
+            "",
+            50,
         );
         assert_eq!(
             summary(&rows),
