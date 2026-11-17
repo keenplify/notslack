@@ -176,6 +176,7 @@ mod tests {
 
     fn row(id: &str, replies: Vec<SlackMessageRow>) -> SlackMessageRow {
         SlackMessageRow {
+            is_app: false,
             id: id.to_string(),
             author: "notslack".to_string(),
             timestamp: "10:00 AM".to_string(),
