@@ -14,7 +14,7 @@ mod save;
 use reaction::SlackAddReactionActionContext;
 
 impl SurfaceState {
-    pub(in crate::ui::surface::message) fn render_slack_message_hover_actions(
+    pub(crate) fn render_slack_message_hover_actions(
         &self,
         row: &SlackMessageRow,
         hover_group: String,
