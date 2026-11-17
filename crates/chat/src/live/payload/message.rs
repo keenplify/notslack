@@ -116,16 +116,22 @@ pub(crate) fn slack_message_from_value_with_context_in_timezone(
 }
 
 /// Whether an app or bot posted the message: Slack marks those with "APP".
+///
+/// An app can post as a person (an integration acting for them), which
+/// leaves its `bot_id` on that person's message; Slack shows no badge
+/// then. So a known author decides by whether they are a bot, and
+/// `bot_id` only counts when the author is unknown.
 fn slack_message_is_app(message: &Value, user: Option<&Value>) -> bool {
+    if message.get("subtype").and_then(Value::as_str) == Some("bot_message") {
+        return true;
+    }
+    if let Some(user) = user {
+        return user.get("is_bot").and_then(Value::as_bool).unwrap_or(false);
+    }
     message
         .get("bot_id")
         .and_then(Value::as_str)
         .is_some_and(|id| !id.is_empty())
-        || message.get("subtype").and_then(Value::as_str) == Some("bot_message")
-        || user
-            .and_then(|user| user.get("is_bot"))
-            .and_then(Value::as_bool)
-            .unwrap_or(false)
 }
 
 fn slack_message_saved_state(message: &Value) -> Option<SlackLaterState> {
@@ -237,6 +243,15 @@ mod tests {
             &HashMap::new(),
         );
         assert!(!person.is_app);
+        let users = HashMap::from([(
+            "U2".to_string(),
+            serde_json::json!({"id": "U2", "name": "john", "is_bot": false}),
+        )]);
+        let posted_for_person = slack_message_from_value(
+            serde_json::json!({"ts": "1.0", "user": "U2", "bot_id": "B2", "text": "merged PR"}),
+            &users,
+        );
+        assert!(!posted_for_person.is_app);
     }
 
     #[gpui::test]
