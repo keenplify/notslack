@@ -89,6 +89,23 @@ pub(in crate::live) fn slack_rich_text_body_from_blocks(
     users: &HashMap<String, Value>,
     sidebar_snapshot: Option<&SlackSidebarSnapshot>,
 ) -> Option<SlackRichTextBody> {
+    slack_rich_text_body_from_raw_blocks(raw_blocks, users, sidebar_snapshot, true)
+}
+
+/// Rich body for a standalone Block Kit surface such as a published App Home
+/// view, which has no message attachments to deduplicate against.
+pub(in crate::live) fn slack_view_rich_text_body(
+    raw_blocks: &[Value],
+) -> Option<SlackRichTextBody> {
+    slack_rich_text_body_from_raw_blocks(raw_blocks, &HashMap::new(), None, false)
+}
+
+fn slack_rich_text_body_from_raw_blocks(
+    raw_blocks: &[Value],
+    users: &HashMap<String, Value>,
+    sidebar_snapshot: Option<&SlackSidebarSnapshot>,
+    has_attachments: bool,
+) -> Option<SlackRichTextBody> {
     let blocks = raw_blocks
         .iter()
         .filter(|block| block.get("type").and_then(Value::as_str) == Some("rich_text"))
@@ -101,7 +118,7 @@ pub(in crate::live) fn slack_rich_text_body_from_blocks(
         })
         .filter_map(|block| slack_rich_text_block(block, users, sidebar_snapshot))
         .collect::<Vec<_>>();
-    let mut block_kit = slack_block_kit_blocks(raw_blocks, true);
+    let mut block_kit = slack_block_kit_blocks(raw_blocks, has_attachments);
     label_slack_block_kit_mentions(&mut block_kit, users);
     (!blocks.is_empty() || !block_kit.is_empty()).then_some(SlackRichTextBody { blocks, block_kit })
 }

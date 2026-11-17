@@ -29,6 +29,7 @@ use crate::live::{
 
 mod actions;
 mod all_threads;
+mod app_dm;
 mod bookmark_folder;
 mod bots;
 mod build;
