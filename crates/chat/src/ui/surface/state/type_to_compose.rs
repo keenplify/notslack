@@ -35,8 +35,13 @@ impl SurfaceState {
             return false;
         };
         window.focus(&input.read(cx).focus_handle_clone(), cx);
-        input.update(cx, |input, cx| {
-            input.replace_text_in_range(None, text, window, cx);
+        // The input reports the change back to this surface, which is being
+        // updated right now, so the text goes in once this update is done.
+        let text = text.to_string();
+        window.defer(cx, move |window, cx| {
+            input.update(cx, |input, cx| {
+                input.replace_text_in_range(None, &text, window, cx);
+            });
         });
         if use_thread {
             if let Some(panel) = self.slack_thread_panel.as_mut() {
