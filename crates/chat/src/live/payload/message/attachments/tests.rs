@@ -168,4 +168,34 @@ fn an_app_card_attachment_shows_its_blocks_instead_of_no_preview_available() {
     assert_eq!(blocks.len(), 2);
     assert!(message.body.contains("Task GE-9776 in Jira Cloud"));
     assert!(!message.body.contains("no preview available"));
+
+#[gpui::test]
+fn forwarded_messages_keep_line_breaks_and_name_mentions() {
+    let message = slack_message_from_value(
+        json!({
+            "ts": "2.0",
+            "user": "U1",
+            "text": "",
+            "attachments": [{
+                "is_share": true,
+                "author_name": "Ben Sandique",
+                "channel_id": "C1",
+                "ts": "1.0",
+                "from_url": "https://example.slack.com/archives/C1/p1",
+                "text": "For approval: <https://x.test|Report>\nFYI <@U2>",
+            }],
+        }),
+        &HashMap::from([(
+            "U2".to_string(),
+            json!({"id": "U2", "name": "aczell", "profile": {"display_name": "Aczell"}}),
+        )]),
+    );
+    let forwarded = message
+        .attachments
+        .first()
+        .expect("expected the forwarded message");
+    assert_eq!(
+        forwarded.description,
+        "For approval: <https://x.test|Report>\nFYI <@U2|Aczell>"
+    );
 }

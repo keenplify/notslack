@@ -12,6 +12,7 @@ use serde_json::Value;
 
 use crate::live::payload::{sidebar_dom::SlackSidebarSnapshot, util::slack_user_display_name};
 
+pub(in crate::live::payload::message) use block_kit::label_slack_mrkdwn_mentions;
 use block_kit::{label_slack_block_kit_mentions, slack_block_kit_blocks, slack_block_kit_body};
 pub(super) use reactions::slack_message_reactions;
 
